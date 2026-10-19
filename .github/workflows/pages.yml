@@ -1,36 +1,33 @@
 name: Build manifest and deploy pages
 
 on:
-  push:
-    branches: [release]
-    paths:
-      - 'docs/**'
-      - 'scripts/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/pages.yml'
-  schedule:
-    - cron: '0 0 * * *'
   workflow_dispatch:
+    inputs:
+      publish_pages:
+        description: 'Sign and publish the manifest to Pages (requires signing keys and Pages setup)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: manifest-pages
+  cancel-in-progress: false
 
 jobs:
   update:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
+    timeout-minutes: 30
     steps:
-      - name: Checkout release branch for manifest
+      - name: Checkout selected source for manifest
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          ref: release
           path: release
 
-      - name: Checkout main branch for docs
+      - name: Checkout selected source for docs
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          ref: main
           path: main
 
       - name: Setup Node
@@ -49,27 +46,46 @@ jobs:
         run: npm run manifest:gen
 
       - name: Sign manifest
+        if: inputs.publish_pages
         working-directory: release
         run: npm run manifest:sign
         env:
           ED25519_PRIV_KEY_B64: ${{ secrets.ED25519_PRIV_KEY_B64 }}
 
       - name: Verify manifest
+        if: inputs.publish_pages
         working-directory: release
         run: npm run manifest:verify
         env:
           ED25519_PUB_KEY_HEX: ${{ secrets.ED25519_PUB_KEY_HEX }}
 
       - name: Copy manifest into main/docs
+        if: inputs.publish_pages
         run: |
           mkdir -p main/docs/manifest
           cp -R release/docs/manifest/* main/docs/manifest/
 
       - name: Upload docs as Pages artifact
+        if: inputs.publish_pages
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
           path: main/docs
 
+      - name: Report validation-only mode
+        if: ${{ !inputs.publish_pages }}
+        run: echo 'Manifest generation passed. Signing, artifact upload, and Pages deployment were not requested; generated files are temporary.' >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    needs: update
+    if: inputs.publish_pages
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

@@ -2,13 +2,13 @@ name: CI Rust
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - '.github/workflows/rust-ci.yml'
       - '.github/actions/install-tauri-deps/**'
       - 'src-tauri/**'
   pull_request:
-    branches: [main]
+    branches: [master]
     paths:
       - '.github/workflows/rust-ci.yml'
       - '.github/actions/install-tauri-deps/**'
@@ -32,7 +32,7 @@ jobs:
       - name: Set up Node.js for isolation build
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Build isolation frontend
@@ -86,7 +86,7 @@ jobs:
       - name: Set up Node.js for isolation build
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Build isolation frontend

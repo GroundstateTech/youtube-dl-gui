@@ -24,6 +24,8 @@ export default [
       'src-isolation/**',
       'src-tauri/**',
       'test-results/**',
+      'coverage/**',
+      'playwright-report/**',
       'src/vite-env.d.ts',
       'msix-layout/**',
       '.vite/**',
