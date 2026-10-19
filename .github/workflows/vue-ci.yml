@@ -2,7 +2,7 @@ name: CI Vue
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - '.github/workflows/vue-ci.yml'
       - 'public/**'
@@ -16,7 +16,7 @@ on:
       - '*.config.*'
       - 'tsconfig.*'
   pull_request:
-    branches: [main]
+    branches: [master]
     paths:
       - '.github/workflows/vue-ci.yml'
       - 'public/**'
